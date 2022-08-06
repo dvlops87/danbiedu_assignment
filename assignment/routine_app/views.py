@@ -67,6 +67,15 @@ class CheckListRoutine(APIView):
                         'result' : result_routine.result,
                         'title' : routines.routine_id.title,
                     })
+        elif len(today_routine) == 0:
+            return Response({
+                'data': 'None',
+                'message':{
+                    'msg':"You don't have created the routine.",
+                    'status': 'NO_ROUTINE_EXIST'
+                }
+            })
+        
         else:
             if today_routine[0].routine_id.account_id.id == int(account_id):
                 result_routine = routine_result.objects.get(routine_id = today_routine[0].routine_id.routine_id)
