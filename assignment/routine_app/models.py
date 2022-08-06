@@ -21,7 +21,7 @@ class routine(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.routine_id
+        return str(self.routine_id)
 
 
 class routine_result(models.Model):
@@ -38,7 +38,7 @@ class routine_result(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.routine_result_id
+        return str(self.routine_result_id)
 
 
 class routine_day(models.Model):
@@ -55,3 +55,6 @@ class routine_day(models.Model):
     routine_id = models.ForeignKey(routine, related_name="routine_day", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return str(self.day)+ '_at_' + str(self.routine_id)
