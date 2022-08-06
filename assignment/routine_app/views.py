@@ -24,10 +24,9 @@ class createRoutine(APIView):
         is_alarm = serializer.initial_data['is_alarm']
         days = serializer.initial_data['days']
         account_id = request.user
-        # print(title,category,goal,bool(is_alarm),days,sep='/')
         routine.objects.create(account_id=account_id,title=title,category=category,goal=goal,is_alarm=bool(is_alarm))
         created_routine = routine.objects.last()
-        routine_result.objects.create(routine_id=created_routine,result='N',is_deleted=False)
+        routine_result.objects.create(routine_id=created_routine,result='NOT',is_deleted=False)
         try:
             if len(days) > 1:
                  for day in days:
@@ -55,7 +54,6 @@ class CheckListRoutine(APIView):
         today_routine = routine_day.objects.select_related(
             'routine_id'
         ).filter(Q(day=dateDict[datetime_date]))
-        # print(today_routine[0].routine_id)
         if len(today_routine) > 1:
             data = []
             for routines in today_routine:
@@ -93,3 +91,42 @@ class CheckListRoutine(APIView):
             }
         })
         
+
+class CheckRoutine(APIView):
+    def get(self,request):
+        account_id = request.query_params.get('account_id')
+        routine_id = request.query_params.get('routine_id')
+        today_routine = routine_result.objects.select_related(
+            'routine_id'
+        ).filter(routine_id=routine_id)
+        if len(today_routine) == 0:
+            return Response({
+                'data': 'None',
+                'message':{
+                    'msg':"You don't have created the routine.",
+                    'status': 'NO_ROUTINE_EXIST'
+                }
+            })
+
+        if today_routine[0].routine_id.account_id.id == int(account_id):
+            routine_day_list = routine_day.objects.filter(routine_id = routine_id)
+            days = []
+            if len(routine_day_list) > 1:
+                for routine_one in routine_day_list:
+                    days.append(routine_one.day)
+            else:
+                days.append(routine_day_list[0].day)
+            data = {
+                    'goal' : today_routine[0].routine_id.goal,
+                    'id' : today_routine[0].routine_id.routine_id,
+                    'result' : today_routine[0].result,
+                    'title' : today_routine[0].routine_id.title,
+                    'days' : days
+            }
+        return Response({
+            'data': data,
+            'message':{
+                'msg':'You have successfully created the routine.',
+                'status': 'ROUTINE_CREATE_OK'
+            }
+        })

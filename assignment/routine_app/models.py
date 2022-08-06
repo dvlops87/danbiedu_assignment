@@ -21,7 +21,7 @@ class routine(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.routine_id)
+        return (self.routine_id)
 
 
 class routine_result(models.Model):
