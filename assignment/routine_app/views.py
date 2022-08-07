@@ -136,6 +136,7 @@ class CheckRoutine(APIView):
             }
         })
 
+
 class updateRoutine(APIView):
     def put(self, request):    
         if request.user.is_authenticated == False:
@@ -157,14 +158,36 @@ class updateRoutine(APIView):
                 print('create_2')
                 routine_day.objects.create(day=days_data[0], routine_id=now_routine[0], created_at=now_routine[0].created_at, modified_at=datetime.now())
         
-        # try:
-        now_routine.update(title=request_data["title"],category=request_data["category"],goal=request_data["goal"],is_alarm=request_data["is_alarm"])
-        return Response({
-            'data': now_routine[0].routine_id,
-            'message':{
-                'msg':'The routine has been modified.',
-                'status': 'ROUTINE_UPDATE_OK'
-            }
-        })
-        # except:
-        #     return Response("Check your input form", status=status.HTTP_400_BAD_REQUEST)
+        try:
+            now_routine.update(title=request_data["title"],category=request_data["category"],goal=request_data["goal"],is_alarm=request_data["is_alarm"])
+            return Response({
+                'data': now_routine[0].routine_id,
+                'message':{
+                    'msg':'The routine has been modified.',
+                    'status': 'ROUTINE_UPDATE_OK'
+                }
+            })
+        except:
+            return Response("Check your input form", status=status.HTTP_400_BAD_REQUEST)
+
+
+class deleteRoutine(APIView):
+    def delete(self,request):
+        if request.user.is_authenticated == False:
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+        try:
+            request_data = json.loads(request.body)
+            now_routine = routine.objects.get(routine_id=request_data["routine_id"],account_id=request_data["account_id"])
+        except:
+            return Response('Routine matching query does not exist.',status=status.HTTP_400_BAD_REQUEST)
+        try:
+            now_routine.delete()
+            return Response({
+                'data': request_data["routine_id"],
+                'message':{
+                    'msg':'The routine has been deleted.',
+                    'status': 'ROUTINE_DELETE_OK'
+                }
+            })
+        except:
+            return Response("Fail to delete routine", status=status.HTTP_400_BAD_REQUEST)
