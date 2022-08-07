@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authentication import TokenAuthentication
 from rest_framework import status
-from .serializers import RoutineSerializer,CreateRoutineSerializer
+from .serializers import RoutineSerializer
 from .models import routine, routine_day, routine_result
+from user_app.models import User
 from django.http import HttpResponse
 from django.db.models import Q
 from datetime import datetime
-
+import json
 # Create your views here.
 
 class createRoutine(APIView):
@@ -34,7 +34,7 @@ class createRoutine(APIView):
             else:
                 routine_day.objects.create(day=days[0], routine_id=created_routine)
         except:
-            return HttpResponse("Check your input form", status=status.HTTP_404_NOT_FOUND)
+            return HttpResponse("Check your input form",  status=status.HTTP_400_BAD_REQUEST)
         return Response({
             'data': created_routine.routine_id,
             'message':{
@@ -47,6 +47,8 @@ class createRoutine(APIView):
 
 class CheckListRoutine(APIView):
     def get(self,request):
+        if request.user.is_authenticated == False:
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
         account_id = request.query_params.get('account_id')
         today = datetime.strptime(request.query_params.get('today'), '%Y-%m-%d')
         datetime_date = today.weekday()
@@ -94,6 +96,8 @@ class CheckListRoutine(APIView):
 
 class CheckRoutine(APIView):
     def get(self,request):
+        if request.user.is_authenticated == False:
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
         account_id = request.query_params.get('account_id')
         routine_id = request.query_params.get('routine_id')
         today_routine = routine_result.objects.select_related(
@@ -110,6 +114,7 @@ class CheckRoutine(APIView):
 
         if today_routine[0].routine_id.account_id.id == int(account_id):
             routine_day_list = routine_day.objects.filter(routine_id = routine_id)
+            print(len(routine_day_list))
             days = []
             if len(routine_day_list) > 1:
                 for routine_one in routine_day_list:
@@ -130,3 +135,36 @@ class CheckRoutine(APIView):
                 'status': 'ROUTINE_CREATE_OK'
             }
         })
+
+class updateRoutine(APIView):
+    def put(self, request):    
+        if request.user.is_authenticated == False:
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+        try:
+            request_data = json.loads(request.body)
+            now_routine = routine.objects.filter(routine_id=request_data["routine_id"])
+        except:
+            return Response('Routine matching query does not exist.',status=status.HTTP_400_BAD_REQUEST)
+        if 'days' in request.data.keys():
+            days_data = request.data.pop('days')
+            origin_r_day = routine_day.objects.filter(routine_id=request_data["routine_id"])
+            origin_r_day.delete()
+            if len(days_data) > 1:
+                for day in days_data:
+                    print('create_1')
+                    routine_day.objects.create(day=day, routine_id=now_routine[0], created_at=now_routine[0].created_at, modified_at=datetime.now())
+            else:
+                print('create_2')
+                routine_day.objects.create(day=days_data[0], routine_id=now_routine[0], created_at=now_routine[0].created_at, modified_at=datetime.now())
+        
+        # try:
+        now_routine.update(title=request_data["title"],category=request_data["category"],goal=request_data["goal"],is_alarm=request_data["is_alarm"])
+        return Response({
+            'data': now_routine[0].routine_id,
+            'message':{
+                'msg':'The routine has been modified.',
+                'status': 'ROUTINE_UPDATE_OK'
+            }
+        })
+        # except:
+        #     return Response("Check your input form", status=status.HTTP_400_BAD_REQUEST)
