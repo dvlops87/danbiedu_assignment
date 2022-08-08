@@ -30,6 +30,7 @@ class RoutineTestCase(APITestCase):
         self.url_3 = 'http://127.0.0.1:8000/routines/get/'
         self.url_4 = 'http://127.0.0.1:8000/routines/update/'
         self.url_5 = 'http://127.0.0.1:8000/routines/delete/'
+        self.url_6 = 'http://127.0.0.1:8000/routines/solve/'
     
     def test_create_routine_success(self):
         data = {
@@ -204,5 +205,39 @@ class RoutineTestCase(APITestCase):
             "routine_id" : "a1"
         }
         response = self.client.delete(self.url_5, data=data_delete_fail, format='json', headers=headers)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_check_routine_success(self):
+        data = {
+            'email': 'tjdgus1977@gmail.com',
+            'password': 'gus29701**'
+        }
+        self.client.login(email='tjdgus1977@gmail.com', password='gus29701**')
+        response_token = self.client.post("http://127.0.0.1:8000/users/api-jwt-auth/",format='json',data=data)
+        token = response_token.json()["access"]
+        headers={"HTTP_AUTHORIZATION": "Bearer " + token}
+        data_delete = {
+            "routine_id" : 1,
+            "result" : "DONE",
+            "days" : ["MON"]
+        }
+        response = self.client.put(self.url_6, data=data_delete, format='json', headers=headers)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+    def test_check_routine_error(self):
+        data = {
+            'email': 'tjdgus1977@gmail.com',
+            'password': 'gus29701**'
+        }
+        self.client.login(email='tjdgus1977@gmail.com', password='gus29701**')
+        response_token = self.client.post("http://127.0.0.1:8000/users/api-jwt-auth/",format='json',data=data)
+        token = response_token.json()["access"]
+        headers={"HTTP_AUTHORIZATION": "Bearer " + token}
+        data_delete = {
+            "routine_id" : 1,
+            "result" : "DONE",
+            "days" : ["MONN"]
+        }
+        response = self.client.put(self.url_6, data=data_delete, format='json', headers=headers)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         

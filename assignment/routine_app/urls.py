@@ -7,4 +7,5 @@ urlpatterns = [
     path('get/', views.CheckRoutine.as_view()),
     path('update/', views.updateRoutine.as_view()),
     path('delete/', views.deleteRoutine.as_view()),
+    path('solve/', views.SolvedRoutine.as_view()),
 ]
