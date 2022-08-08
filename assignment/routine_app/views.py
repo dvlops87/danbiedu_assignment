@@ -20,7 +20,7 @@ class createRoutine(APIView):
         serializer = RoutineSerializer(data=request.data)       
         
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         if request.user.is_anonymous:
             account_id = User.objects.all().first()
         else:
@@ -59,7 +59,7 @@ class createRoutine(APIView):
 class CheckListRoutine(APIView):
     def get(self,request):
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         if request.user.is_anonymous:
             account_id = request.query_params.get('account_id')
         else:
@@ -118,7 +118,7 @@ class CheckListRoutine(APIView):
 class CheckRoutine(APIView):
     def get(self,request):
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         account_id = request.query_params.get('account_id')
         routine_id = request.query_params.get('routine_id')
         if str(account_id).isnumeric()==False or str(routine_id).isnumeric()==False :
@@ -168,7 +168,7 @@ class CheckRoutine(APIView):
 class updateRoutine(APIView):
     def put(self, request):    
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         serializer = RoutineSerializer(data=request.data)  
         try:
             if request.user.is_anonymous:
@@ -176,7 +176,7 @@ class updateRoutine(APIView):
             else:
                 now_routine = routine.objects.filter(routine_id=serializer.initial_data["routine_id"])
         except:
-            return Response('Routine matching query does not exist.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('Routine matching query does not exist.',status=status.HTTP_404_NOT_FOUND)
         if 'MIRACLE' not in serializer.initial_data["category"] and 'HOMEWORK' not in serializer.initial_data["category"] :
             return Response('Check your input form about category.',status=status.HTTP_400_BAD_REQUEST)   
         if serializer.initial_data['days']:
@@ -207,12 +207,12 @@ class updateRoutine(APIView):
 class deleteRoutine(APIView):
     def delete(self,request):
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         try:
             request_data = json.loads(request.body)
             now_routine = routine.objects.get(routine_id=request_data["routine_id"],account_id=request_data["account_id"])
         except:
-            return Response('Routine matching query does not exist.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('Routine matching query does not exist.',status=status.HTTP_404_NOT_FOUND)
         try:
             now_routine.delete()
             return Response({
@@ -223,7 +223,7 @@ class deleteRoutine(APIView):
                 }
             })
         except:
-            return Response("Fail to delete routine", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Fail to delete routine", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -232,7 +232,7 @@ class deleteRoutine(APIView):
 class SolvedRoutine(APIView):
     def put(self,request):
         if request.user.is_authenticated:
-            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('등록되지 않은 사용자입니다.',status=status.HTTP_403_FORBIDDEN)
         serializer = RoutineSerializer(data=request.data)  
         if len(serializer.initial_data['days'])!=1 or serializer.initial_data['days'][0] not in ['MON','TUE','WED','THU','FRI','SAT','SUN']:
             return Response("Check your input form about days", status=status.HTTP_400_BAD_REQUEST)
@@ -245,7 +245,7 @@ class SolvedRoutine(APIView):
                 now_routine = routine_day.objects.filter(routine_id=serializer.initial_data["routine_id"])
                 now_routine_result = routine_result.objects.filter(routine_id=serializer.initial_data["routine_id"])
         except:
-            return Response('Routine matching query does not exist.',status=status.HTTP_400_BAD_REQUEST)
+            return Response('Routine matching query does not exist.',status=status.HTTP_404_NOT_FOUND)
         try:
             for r_day, r_result in zip(now_routine, now_routine_result):
                 if r_day.day == serializer.initial_data['days'][0]:
