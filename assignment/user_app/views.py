@@ -4,13 +4,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import AuthenticationFailed
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.utils.decorators import method_decorator
 from django.conf import settings
 
 import requests
 import jwt
-import datetime
-import ssl
 from .serializers import UserCreateSerializer, UserSerializer
 from .password_validcheck import password_validcheck
 from .models import User
@@ -36,25 +35,18 @@ def createUser(request):
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
-        search_email = request.POST['email']
-        password = request.POST['password']
-        user = User.objects.filter(email=search_email).first()
+        search_email = request.POST.get("email")
+        password = request.POST.get("password")
+        user = User.objects.get(email=search_email)
 
         if user is None:
             raise AuthenticationFailed('User not found!') 
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password!') 
-        
+
         data = {'email': search_email, 'password': password}
         response_token = requests.post("http://127.0.0.1:8000/users/api-jwt-auth/", data=data)
         response_token = response_token.json()
-        # payload= {
-        #     'email' : user.email,
-        #     'exp' : datetime.datetime.now() + datetime.timedelta(minutes=60), # 유효 시간
-        #     'iat' : datetime.datetime.now() # 발급 시각
-        # }
-        # token = jwt.encode(payload, JWT_SECRET_KEY, algorithm = 'HS256').decode('utf-8')
-
         response = JsonResponse({
             'message' : 'ok',
             'jwt':response_token["access"]
